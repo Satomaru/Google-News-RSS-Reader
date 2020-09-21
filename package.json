@@ -1,0 +1,7 @@
+{
+  "name": "Sandbox",
+  "version": "1.0.0",
+  "dependencies": {
+    "follow-redirects": "1.13.0"
+  }
+}
