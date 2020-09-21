@@ -1,7 +1,9 @@
 {
-  "name": "Sandbox",
+  "name": "google-news-rss-reader",
   "version": "1.0.0",
+  "private": true,
   "dependencies": {
+    "fast-xml-parser": "3.17.4",
     "follow-redirects": "1.13.0"
   }
 }

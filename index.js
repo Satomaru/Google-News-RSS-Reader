@@ -1,27 +1,20 @@
-const { http, https } = require('follow-redirects');
+/*
+ * Googleニュースから技術記事を取得して、そのタイトルを表示します。
+ *
+ * 記事を5件に絞っているのは、
+ * 標準出力に対して、短時間に一定量以上の出力を行うと、
+ * 出力が欠けてしまう不具合が発生した為です。
+ * 原因は不明です。
+ *
+ * fast-xml-parserは、本来はgoogle-news.jsの内部で使用するべきですが、
+ * google-news.jsからrequireすると、なぜか見つかりません。
+ * 原因は不明です。
+ */
 
-const topicTechnologyUrl = 'https://news.google.com/' +
-  'news/rss/headlines/section/topic/TECHNOLOGY' +
-  '?hl=ja&gl=JP&ceid=JP:ja';
+const googleNews = require('./google-news.js');
+const xmlParser = require('fast-xml-parser');
 
-const titleRegExp = /<title>(.+?)<\/title>/;
-
-const request = url =>
-  new Promise((resolve, reject) =>
-    https.get(url, res => {
-      let body = '';
-      res.on('data', data => body = body + data);
-      res.on('end', () => resolve(body));
-      res.on('error', e => reject(e));
-    })
-  );
-
-const getItems = (body, count) =>
-  body.match(/<item>.+?<\/item>/g)
-    .slice(0, count)
-    .map(item => ({
-      title: titleRegExp.exec(item)[1]
-    }));
-
-request(topicTechnologyUrl)
-  .then(body => getItems(body, 10).forEach(item => console.log(item.title)));
+googleNews.getTechnologyTopics()
+  .then(xml => xmlParser.parse(xml).rss.channel.item.slice(0, 5))
+  .then(items => items.forEach(item => console.log('「%s」', item.title)))
+  .catch(error => console.error(error));
