@@ -9,14 +9,14 @@ const { https } = require('follow-redirects');
  */
 module.exports.get = url =>
   new Promise((resolve, reject) =>
-    https.get(url, res => {
-      if (res.statusCode != 200) {
-        reject(`statusCode: ${res.statusCode}`);
+    https.get(url, response => {
+     if (response.statusCode != 200) {
+        reject(`statusCode: ${response.statusCode}`);
       } else {
         let body = '';
-        res.on('data', data => body = body + data);
-        res.on('end', () => resolve(body));
-        res.on('error', e => reject(e));
+        response.on('data', data => body = body + data);
+        response.on('end', () => resolve(body));
+        response.on('error', e => reject(e));
       }
     })
   );
