@@ -1,3 +1,4 @@
+const stdio = require('./stdio');
 const Topic = require('./google-news').Topic;
 const topic = new Topic();
 
@@ -22,34 +23,48 @@ function promptCategory() {
 }
 
 /**
- * カテゴリーの説明、および操作の入力要求を表示します。
+ * カレントのトピックの説明、および操作の入力要求を表示します。
  */
 function showTopicAndPrompt() {
   console.log(topic.describe());
-  process.stdout.write(`\nmore ${topic.remain} topic(s). q)uit or next> `);
+
+  const prompt = (!topic.isEnd())
+    ? `\nmore ${topic.remain} topic(s). q)uit or next when other key> `
+    : '\nend of topics. quit when any key> ';
+
+  process.stdout.write(prompt);
 }
 
 /**
  * トピックがダウンロード済である場合の入力後処理を行います。
+ *
+ * @param {string} input - 入力
  */
-function whenDownloaded(input) {
+function onDataWhenDownloaded(input) {
   if (input === 'q') {
     topic.reset();
     promptCategory();
   } else {
-    topic.move(1);
-    showTopicAndPrompt();
-  }
+    if (topic.move(1)) {
+      showTopicAndPrompt();
+    } else {
+      promptCategory();
+    }
+ }
 }
 
 /**
  * トピックがダウンロード済でない場合の入力後処理を行います。
+ *
+ * @param {string} input - 入力
  */
-function whenNotDownloaded(input) {
+function onDataWhenNotDownloaded(input) {
   const index = parseInt(input);
 
   if (index >= 0 && index < categoryList.length) {
-    topic.download(categoryList[index]).then(() => showTopicAndPrompt());
+    topic.download(categoryList[index])
+      .then(() => showTopicAndPrompt())
+      .catch(e => console.error(e));
   } else {
     promptCategory();
   }
@@ -57,13 +72,12 @@ function whenNotDownloaded(input) {
 
 promptCategory();
 
-process.stdin.on('data', buffer => {
-  const input = buffer.toString().replace(/[\s\0]+$/, '');
+stdio.listenStdin(input => {
   console.log();
 
-  if (topic.idDownloaded()) {
-    whenDownloaded(input);
+  if (topic.isDownloaded()) {
+    onDataWhenDownloaded(input);
   } else {
-    whenNotDownloaded(input);
+    onDataWhenNotDownloaded(input);
   }
-});
+})

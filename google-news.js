@@ -1,7 +1,10 @@
 const RssParser = require('rss-parser');
 const parser = new RssParser();
 
-function resolveUrl(category) {
+/**
+ * Googleニュースのカテゴリー別トピック一覧URLを取得します。
+ */
+function getCategoryTopicsUrl(category) {
   return 'https://news.google.com' +
     '/news/rss/headlines/section/topic/' + category +
     '?hl=ja&gl=JP&ceid=JP:ja';
@@ -9,6 +12,9 @@ function resolveUrl(category) {
 
 /**
  * トピックを管理します。
+ *
+ * @module google-news
+ * @class Topic
  */
 module.exports.Topic = class Topic {
 
@@ -45,10 +51,10 @@ module.exports.Topic = class Topic {
   /**
    * カレントのトピックの説明を作成します。
    *
-   * @return {string} - カレントのトピックの文字列表現
+   * @return {string} - カレントのトピックの説明
    */
   describe() {
-    if (this.idDownloaded()) {
+    if (this.isDownloaded()) {
       const json = JSON.stringify(this.current, null, 2);
       return `${this.category} #${this.index} ${json}`;
     } else {
@@ -61,8 +67,17 @@ module.exports.Topic = class Topic {
    *
    * @return トピックがダウンロード済である場合はtrue
    */
-  idDownloaded() {
+  isDownloaded() {
     return this.category !== null;
+  }
+
+  /**
+   * カレントのトピックが末尾であることを判定します。
+   *
+   * @return カレントのトピックが末尾である場合はtrue
+   */
+  isEnd() {
+    return this.remain === 0;
   }
 
   /**
@@ -82,14 +97,14 @@ module.exports.Topic = class Topic {
    */
   download(category) {
     this.reset();
-    this.category = category;
 
-    return parser.parseURL(resolveUrl(category)).then(feed => {
+    return parser.parseURL(getCategoryTopicsUrl(category)).then(feed => {
       this.items = feed.items.map(item => ({
         title: item.title,
         pubDate: item.pubDate
       }));
 
+      this.category = category;
       return this;
     });
   }
